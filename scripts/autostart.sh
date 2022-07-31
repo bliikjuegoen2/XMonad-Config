@@ -1,5 +1,7 @@
 #!/bin/bash
 
+myWallpaper="/home/bliikjuegoen/Pictures/space.jpg";
+
 function run {
   if ! pgrep $1 ;
   then
@@ -17,7 +19,7 @@ function run {
 #xrandr --output LVDS1 --mode 1366x768 --output DP3 --mode 1920x1080 --right-of LVDS1
 #xrandr --output HDMI2 --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI1 --primary --mode 1920x1080 --pos 0x0 --rotate normal --output VIRTUAL1 --off
 
-(sleep 2; run $HOME/.config/polybar/launch.sh) &
+# (sleep 2; run $HOME/.config/polybar/launch.sh) &
 
 #change your keyboard if you need it
 #setxkbmap -layout be
@@ -29,13 +31,16 @@ xsetroot -cursor_name left_ptr &
 run dex $HOME/.config/autostart/arcolinux-welcome-app.desktop
 
 #Some ways to set your wallpaper besides variety or nitrogen
-feh --bg-fill /usr/share/backgrounds/archlinux/arch-wallpaper.jpg &
-feh --bg-fill /usr/share/backgrounds/arcolinux/arco-wallpaper.jpg &
+feh --bg-fill $myWallpaper &
+# feh --bg-fill $myWallpaper &
 #start the conky to learn the shortcuts
-(conky -c $HOME/.xmonad/scripts/system-overview) &
+# (conky -c $HOME/.xmonad/scripts/system-overview) &
+
+# enable reverse scrolling
+xinput set-prop 'SYNA7DAB:00 06CB:CD40 Touchpad' 'libinput Natural Scrolling Enabled' 1 &
 
 #starting utility applications at boot time
-run variety &
+# run variety &
 run nm-applet &
 run pamac-tray &
 run xfce4-power-manager &
