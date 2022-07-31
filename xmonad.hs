@@ -153,12 +153,10 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- FUNCTION KEYS
     , ((0, xK_F12), spawn $ "xfce4-terminal --drop-down" )
 
-    -- SUPER + SHIFT KEYS
+    -- ALT Keys (reloading xmonad)
 
-
-    , ((modMask .|. shiftMask , xK_d ), spawn $ "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'")
-    , ((modMask .|. shiftMask , xK_r ), spawn $ "xmonad --recompile && xmonad --restart")
-    , ((modMask .|. shiftMask , xK_q ), kill)
+    , ((altKeyMask .|. modMask , xK_r ), spawn $ "$HOME/.xmonad/scripts/recompile.py && xmonad --restart")
+    , ((altKeyMask, xK_r), spawn $ "xmonad --restart" )
     -- , ((modMask .|. shiftMask , xK_x ), io (exitWith ExitSuccess))
 
     -- CONTROL + ALT KEYS
@@ -190,7 +188,6 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((mod1Mask, xK_f), spawn $ "variety -f" )
     , ((mod1Mask, xK_n), spawn $ "variety -n" )
     , ((mod1Mask, xK_p), spawn $ "variety -p" )
-    , ((mod1Mask, xK_r), spawn $ "xmonad --restart" )
     , ((mod1Mask, xK_t), spawn $ "variety -t" )
     , ((mod1Mask, xK_Up), spawn $ "variety --pause" )
     , ((mod1Mask, xK_Down), spawn $ "variety --resume" )

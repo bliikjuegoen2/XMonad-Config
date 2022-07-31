@@ -22,5 +22,6 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 *.jpg
+*.log
 xmonad.errors
 xmonad-x86_64-linux
