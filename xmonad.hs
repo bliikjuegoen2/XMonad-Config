@@ -121,123 +121,103 @@ myLayout = spacingRaw True (Border 5 5 5 5) True (Border 5 5 5 5) True $ avoidSt
         tiled_ratio = 1/2
 
 
-myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
+myMouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
 
     -- mod-button1, Set the window to floating mode and move by dragging
-    [ ((modMask, 1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster))
+    [ ((modMask, 1), \w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster)
 
     -- mod-button2, Raise the window to the top of the stack
-    , ((modMask, 2), (\w -> focus w >> windows W.shiftMaster))
+    , ((modMask, 2), \w -> focus w >> windows W.shiftMaster)
 
     -- mod-button3, Set the window to floating mode and resize by dragging
-    , ((modMask, 3), (\w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster))
+    , ((modMask, 3), \w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster)
 
     ]
 
 toggleFullscreen :: X()
-toggleFullscreen = do 
+toggleFullscreen = do
     windows <- gets windowset
     let layout = description $ S.layout $ S.workspace $ S.current windows
     sendMessage $ JumpToLayout (if layout /= "Spacing Full" then "Full" else "Tall")
 
 -- keys config
 
-myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
+myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     ----------------------------------------------------------------------
 
-    [ ((modMask, xK_space), spawn $ myMenu)
+    [ ((modMask, xK_space), spawn myMenu)
 
     -- SUPER + FUNCTION KEYS
-    , ((modMask, xK_b), spawn $ myBrowser)
-    , ((modMask, xK_t), spawn $ myTerminal)
-    , ((modMask, xK_f ), spawn $ myFiles)
-    , ((modMask, xK_x), spawn $ "archlinux-logout" )
-    , ((modMask, xK_c), spawn $ myCodeEditor)
+    , ((modMask, xK_b), spawn myBrowser)
+    , ((modMask, xK_t), spawn myTerminal)
+    , ((modMask, xK_f ), spawn myFiles)
+    , ((modMask, xK_x), spawn "archlinux-logout" )
+    , ((modMask, xK_c), spawn myCodeEditor)
     , ((modMask, xK_m), toggleFullscreen)
     , ((modMask, xK_q), kill )
-    , ((modMask, xK_Escape), spawn $ "xkill" )
+    , ((modMask, xK_Escape), spawn "xkill" )
 
     -- FUNCTION KEYS
-    , ((0, xK_F12), spawn $ "xfce4-terminal --drop-down" )
+    , ((0, xK_F12), spawn "xfce4-terminal --drop-down" )
 
     -- ALT Keys (reloading xmonad)
 
-    , ((altKeyMask .|. modMask , xK_r ), spawn $ "$HOME/.xmonad/scripts/recompile.py && xmonad --restart")
-    , ((altKeyMask, xK_r), spawn $ "xmonad --restart" )
+    , ((altKeyMask .|. modMask , xK_r ), spawn "$HOME/.xmonad/scripts/recompile.py && xmonad --restart")
+    , ((altKeyMask, xK_r), spawn "xmonad --restart" )
     -- , ((modMask .|. shiftMask , xK_x ), io (exitWith ExitSuccess))
 
     -- CONTROL + ALT KEYS
 
-    , ((controlMask .|. mod1Mask , xK_Next ), spawn $ "conky-rotate -n")
-    , ((controlMask .|. mod1Mask , xK_Prior ), spawn $ "conky-rotate -p")
-    , ((controlMask .|. mod1Mask , xK_a ), spawn $ "xfce4-appfinder")
-    , ((controlMask .|. mod1Mask , xK_b ), spawn $ "thunar")
-    , ((controlMask .|. mod1Mask , xK_c ), spawn $ "catfish")
-    , ((controlMask .|. mod1Mask , xK_e ), spawn $ "archlinux-tweak-tool")
-    , ((controlMask .|. mod1Mask , xK_f ), spawn $ "firefox")
-    , ((controlMask .|. mod1Mask , xK_g ), spawn $ "chromium -no-default-browser-check")
-    , ((controlMask .|. mod1Mask , xK_i ), spawn $ "nitrogen")
-    , ((controlMask .|. mod1Mask , xK_k ), spawn $ "archlinux-logout")
-    , ((controlMask .|. mod1Mask , xK_l ), spawn $ "archlinux-logout")
-    , ((controlMask .|. mod1Mask , xK_m ), spawn $ "xfce4-settings-manager")
-    , ((controlMask .|. mod1Mask , xK_o ), spawn $ "$HOME/.xmonad/scripts/picom-toggle.sh")
-    , ((controlMask .|. mod1Mask , xK_p ), spawn $ "pamac-manager")
-    , ((controlMask .|. mod1Mask , xK_r ), spawn $ "rofi-theme-selector")
-    , ((controlMask .|. mod1Mask , xK_s ), spawn $ "spotify")
-    , ((controlMask .|. mod1Mask , xK_t ), spawn $ "alacritty")
-    , ((controlMask .|. mod1Mask , xK_u ), spawn $ "pavucontrol")
-    , ((controlMask .|. mod1Mask , xK_v ), spawn $ "vivaldi-stable")
-    , ((controlMask .|. mod1Mask , xK_w ), spawn $ "arcolinux-welcome-app")
-    , ((controlMask .|. mod1Mask , xK_Return ), spawn $ "alacritty")
+    -- not in use
 
     -- ALT + ... KEYS
 
-    , ((mod1Mask, xK_f), spawn $ "variety -f" )
-    , ((mod1Mask, xK_n), spawn $ "variety -n" )
-    , ((mod1Mask, xK_p), spawn $ "variety -p" )
-    , ((mod1Mask, xK_t), spawn $ "variety -t" )
-    , ((mod1Mask, xK_Up), spawn $ "variety --pause" )
-    , ((mod1Mask, xK_Down), spawn $ "variety --resume" )
-    , ((mod1Mask, xK_Left), spawn $ "variety -p" )
-    , ((mod1Mask, xK_Right), spawn $ "variety -n" )
-    , ((mod1Mask, xK_F2), spawn $ "xfce4-appfinder --collapsed" )
-    , ((mod1Mask, xK_F3), spawn $ "xfce4-appfinder" )
+    , ((mod1Mask, xK_f), spawn "variety -f" )
+    , ((mod1Mask, xK_n), spawn "variety -n" )
+    , ((mod1Mask, xK_p), spawn "variety -p" )
+    , ((mod1Mask, xK_t), spawn "variety -t" )
+    , ((mod1Mask, xK_Up), spawn "variety --pause" )
+    , ((mod1Mask, xK_Down), spawn "variety --resume" )
+    , ((mod1Mask, xK_Left), spawn "variety -p" )
+    , ((mod1Mask, xK_Right), spawn "variety -n" )
+    , ((mod1Mask, xK_F2), spawn "xfce4-appfinder --collapsed" )
+    , ((mod1Mask, xK_F3), spawn "xfce4-appfinder" )
 
     --VARIETY KEYS WITH PYWAL
 
-    , ((mod1Mask .|. shiftMask , xK_f ), spawn $ "variety -f && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_n ), spawn $ "variety -n && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_p ), spawn $ "variety -p && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_t ), spawn $ "variety -t && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_u ), spawn $ "wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    , ((mod1Mask .|. shiftMask , xK_f ), spawn "variety -f && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    , ((mod1Mask .|. shiftMask , xK_n ), spawn "variety -n && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    , ((mod1Mask .|. shiftMask , xK_p ), spawn "variety -p && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    , ((mod1Mask .|. shiftMask , xK_t ), spawn "variety -t && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    , ((mod1Mask .|. shiftMask , xK_u ), spawn "wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
 
     --CONTROL + SHIFT KEYS
 
-    , ((controlMask .|. shiftMask , xK_Escape ), spawn $ "xfce4-taskmanager")
+    , ((controlMask .|. shiftMask , xK_Escape ), spawn "xfce4-taskmanager")
 
     --SCREENSHOTS
 
-    , ((0, xK_Print), spawn $ "scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'")
-    , ((controlMask, xK_Print), spawn $ "xfce4-screenshooter" )
-    , ((controlMask .|. shiftMask , xK_Print ), spawn $ "gnome-screenshot -i")
-    , ((controlMask .|. modMask , xK_Print ), spawn $ "flameshot gui")
+    , ((0, xK_Print), spawn "scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'")
+    , ((controlMask, xK_Print), spawn "xfce4-screenshooter" )
+    , ((controlMask .|. shiftMask , xK_Print ), spawn "gnome-screenshot -i")
+    , ((controlMask .|. modMask , xK_Print ), spawn "flameshot gui")
 
     --MULTIMEDIA KEYS
 
     -- Mute volume
-    , ((0, xF86XK_AudioMute), spawn $ "amixer -q set Master toggle")
+    , ((0, xF86XK_AudioMute), spawn "amixer -q set Master toggle")
 
     -- Decrease volume
-    , ((0, xF86XK_AudioLowerVolume), spawn $ "amixer -q set Master 5%-")
+    , ((0, xF86XK_AudioLowerVolume), spawn "amixer -q set Master 5%-")
 
     -- Increase volume
-    , ((0, xF86XK_AudioRaiseVolume), spawn $ "amixer -q set Master 5%+")
+    , ((0, xF86XK_AudioRaiseVolume), spawn "amixer -q set Master 5%+")
 
     -- Increase brightness
-    , ((0, xF86XK_MonBrightnessUp),  spawn $ "xbacklight -inc 5")
+    , ((0, xF86XK_MonBrightnessUp),  spawn "xbacklight -inc 5")
 
     -- Decrease brightness
-    , ((0, xF86XK_MonBrightnessDown), spawn $ "xbacklight -dec 5")
+    , ((0, xF86XK_MonBrightnessDown), spawn "xbacklight -dec 5")
 
     -- Alternative to increase brightness
 
@@ -252,10 +232,10 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 --  , ((0, xF86XK_AudioPrev), spawn $ "mpc prev")
 --  , ((0, xF86XK_AudioStop), spawn $ "mpc stop")
 
-    , ((0, xF86XK_AudioPlay), spawn $ "playerctl play-pause")
-    , ((0, xF86XK_AudioNext), spawn $ "playerctl next")
-    , ((0, xF86XK_AudioPrev), spawn $ "playerctl previous")
-    , ((0, xF86XK_AudioStop), spawn $ "playerctl stop")
+    , ((0, xF86XK_AudioPlay), spawn "playerctl play-pause")
+    , ((0, xF86XK_AudioNext), spawn "playerctl next")
+    , ((0, xF86XK_AudioPrev), spawn "playerctl previous")
+    , ((0, xF86XK_AudioStop), spawn "playerctl stop")
 
 
     --------------------------------------------------------------------
@@ -268,7 +248,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask .|. controlMask , xK_j ), nextWS)
 
     , ((modMask .|. controlMask , xK_k ), prevWS)
-    
+
     -- move windows between workspaces
 
     , ((modMask .|. shiftMask, xK_j ), shiftToNext >> nextWS)
@@ -355,9 +335,7 @@ main = do
             --myBaseConfig { keys = belgianKeys <+> keys belgianConfig }
 
                 {startupHook = myStartupHook
-, layoutHook = gaps [(U,5), (D,5), (R,5), (L,5)] (myLayout 
-    -- ||| layoutHook myBaseConfig
-    )
+, layoutHook = gaps [(U,5), (D,5), (R,5), (L,5)] myLayout
 , manageHook = manageSpawn <+> myManageHook <+> manageHook myBaseConfig
 , modMask = myModMask
 , borderWidth = myBorderWidth
