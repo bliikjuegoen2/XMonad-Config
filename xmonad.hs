@@ -41,7 +41,7 @@ import qualified DBus.Client as D
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
-myMenu = "rofi -show run"
+myMenu = "xfce4-appfinder"
 myBrowser = "brave"
 myTerminal = "urxvt"
 myFiles = "thunar"
@@ -139,7 +139,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     ----------------------------------------------------------------------
 
-    [ ((modMask, xK_Return), spawn $ myMenu)
+    [ ((0, xK_Super_L), spawn $ myMenu)
 
     -- SUPER + FUNCTION KEYS
     , ((modMask, xK_b), spawn $ myBrowser)
@@ -348,7 +348,7 @@ main = do
             --myBaseConfig { keys = belgianKeys <+> keys belgianConfig }
 
                 {startupHook = myStartupHook
-, layoutHook = gaps [(U,35), (D,5), (R,5), (L,5)] $ myLayout ||| layoutHook myBaseConfig
+, layoutHook = gaps [(U,5), (D,5), (R,5), (L,5)] $ myLayout ||| layoutHook myBaseConfig
 , manageHook = manageSpawn <+> myManageHook <+> manageHook myBaseConfig
 , modMask = myModMask
 , borderWidth = myBorderWidth
