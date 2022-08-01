@@ -42,7 +42,7 @@ import qualified XMonad.StackSet as S
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
-myMenu = "xfce4-appfinder"
+myMenu = "xfce4-popup-whiskermenu"
 myBrowser = "brave"
 myTerminal = "urxvt"
 myFiles = "thunar"
@@ -335,7 +335,7 @@ main = do
             --myBaseConfig { keys = belgianKeys <+> keys belgianConfig }
 
                 {startupHook = myStartupHook
-, layoutHook = gaps [(U,5), (D,5), (R,5), (L,5)] myLayout
+, layoutHook = gaps [(U,35), (D,5), (R,5), (L,5)] $ myLayout ||| layoutHook myBaseConfig
 , manageHook = manageSpawn <+> myManageHook <+> manageHook myBaseConfig
 , modMask = myModMask
 , borderWidth = myBorderWidth
