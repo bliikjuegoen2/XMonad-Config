@@ -38,6 +38,7 @@ import qualified Data.ByteString as B
 import Control.Monad (liftM2)
 import qualified DBus as D
 import qualified DBus.Client as D
+import qualified XMonad.StackSet as S
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
@@ -112,7 +113,7 @@ myManageHook = composeAll . concat $
 
 
 
-myLayout = spacingRaw True (Border 0 5 5 5) True (Border 5 5 5 5) True $ avoidStruts $ mkToggle (NBFULL ?? NOBORDERS ?? EOT) $ tiled ||| Mirror tiled ||| spiral (6/7)  ||| ThreeColMid 1 (3/100) (1/2) ||| Full
+myLayout = spacingRaw True (Border 5 5 5 5) True (Border 5 5 5 5) True $ avoidStruts $ mkToggle (NBFULL ?? NOBORDERS ?? EOT) $ tiled ||| Mirror tiled ||| spiral (6/7)  ||| ThreeColMid 1 (3/100) (1/2) ||| Full
     where
         tiled = Tall nmaster delta tiled_ratio
         nmaster = 1
@@ -133,13 +134,18 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     ]
 
+toggleFullscreen :: X()
+toggleFullscreen = do 
+    windows <- gets windowset
+    let layout = description $ S.layout $ S.workspace $ S.current windows
+    sendMessage $ JumpToLayout (if layout /= "Spacing Full" then "Full" else "Tall")
 
 -- keys config
 
 myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     ----------------------------------------------------------------------
 
-    [ ((0, xK_Super_L), spawn $ myMenu)
+    [ ((modMask, xK_space), spawn $ myMenu)
 
     -- SUPER + FUNCTION KEYS
     , ((modMask, xK_b), spawn $ myBrowser)
@@ -147,6 +153,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask, xK_f ), spawn $ myFiles)
     , ((modMask, xK_x), spawn $ "archlinux-logout" )
     , ((modMask, xK_c), spawn $ myCodeEditor)
+    , ((modMask, xK_m), toggleFullscreen)
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn $ "xkill" )
 
@@ -255,7 +262,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     --  XMONAD LAYOUT KEYS
 
     -- Cycle through the available layout algorithms.
-    , ((modMask, xK_space), sendMessage NextLayout)
+    , ((modMask, xK_Return), sendMessage NextLayout)
 
     --Focus selected desktop
     , ((modMask .|. controlMask , xK_j ), nextWS)
@@ -348,7 +355,9 @@ main = do
             --myBaseConfig { keys = belgianKeys <+> keys belgianConfig }
 
                 {startupHook = myStartupHook
-, layoutHook = gaps [(U,5), (D,5), (R,5), (L,5)] $ myLayout ||| layoutHook myBaseConfig
+, layoutHook = gaps [(U,5), (D,5), (R,5), (L,5)] (myLayout 
+    -- ||| layoutHook myBaseConfig
+    )
 , manageHook = manageSpawn <+> myManageHook <+> manageHook myBaseConfig
 , modMask = myModMask
 , borderWidth = myBorderWidth
