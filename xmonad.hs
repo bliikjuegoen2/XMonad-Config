@@ -138,7 +138,7 @@ toggleFullscreen :: X()
 toggleFullscreen = do
     windows <- gets windowset
     let layout = description $ S.layout $ S.workspace $ S.current windows
-    sendMessage $ JumpToLayout (if layout /= "Spacing Full" then "Full" else "Tall")
+    sendMessage $ JumpToLayout (if layout /= "Spacing Full" && layout /= "Full" then "Full" else "Tall")
 
 -- keys config
 
@@ -157,8 +157,8 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
 
-    -- FUNCTION KEYS
-    , ((0, xK_F12), spawn "xfce4-terminal --drop-down" )
+    -- -- FUNCTION KEYS
+    -- , ((0, xK_F12), spawn "xfce4-terminal --drop-down" )
 
     -- ALT Keys (reloading xmonad)
 
@@ -197,10 +197,11 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     --SCREENSHOTS
 
-    , ((0, xK_Print), spawn "scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'")
-    , ((controlMask, xK_Print), spawn "xfce4-screenshooter" )
-    , ((controlMask .|. shiftMask , xK_Print ), spawn "gnome-screenshot -i")
-    , ((controlMask .|. modMask , xK_Print ), spawn "flameshot gui")
+    , ((0, xK_Print), spawn "deepin-screenshot")
+    -- , ((0, xK_Print), spawn "scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'")
+    -- , ((controlMask, xK_Print), spawn "xfce4-screenshooter" )
+    -- , ((controlMask .|. shiftMask , xK_Print ), spawn "gnome-screenshot -i")
+    -- , ((controlMask .|. modMask , xK_Print ), spawn "flameshot gui")
 
     --MULTIMEDIA KEYS
 
@@ -227,7 +228,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     -- Decrease brightness
     -- , ((0, xF86XK_MonBrightnessDown), spawn $ "brightnessctl s 5%-")
 
---  , ((0, xF86XK_AudioPlay), spawn $ "mpc toggle")
+--  , ((0, xF86XK_AudioPlay), spawn $ "mpc toggle")--info --text".split() + [out])
 --  , ((0, xF86XK_AudioNext), spawn $ "mpc next")
 --  , ((0, xF86XK_AudioPrev), spawn $ "mpc prev")
 --  , ((0, xF86XK_AudioStop), spawn $ "mpc stop")
@@ -298,7 +299,8 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     | (i, k) <- zip (XMonad.workspaces conf) [xK_1,xK_2,xK_3,xK_4,xK_5,xK_6,xK_7,xK_8,xK_9,xK_0]
 
     --French Azerty users use this line
-    -- | (i, k) <- zip (XMonad.workspaces conf) [xK_ampersand, xK_eacute, xK_quotedbl, xK_apostrophe, xK_parenleft, xK_minus, xK_egrave, xK_underscore, xK_ccedilla , xK_agrave]
+
+    ---- | (i, k) <- zip (XMonad.workspaces conf) [xK_ampersand, xK_eacute, xK_quotedbl, xK_apostrophe, xK_parenleft, xK_minus, xK_egrave, xK_underscore, xK_ccedilla , xK_agrave]
 
     --Belgian Azerty users use this line
     --   | (i, k) <- zip (XMonad.workspaces conf) [xK_ampersand, xK_eacute, xK_quotedbl, xK_apostrophe, xK_parenleft, xK_section, xK_egrave, xK_exclam, xK_ccedilla, xK_agrave]
