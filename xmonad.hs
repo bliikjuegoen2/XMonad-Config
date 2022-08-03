@@ -12,6 +12,7 @@ import XMonad.Config.Azerty
 import XMonad.Util.Run(spawnPipe)
 import XMonad.Actions.SpawnOn
 import XMonad.Util.EZConfig (additionalKeys, additionalMouseBindings)
+import qualified XMonad.Util.ExtensibleState as ST
 import XMonad.Actions.CycleWS
 import XMonad.Hooks.UrgencyHook
 import qualified Codec.Binary.UTF8.String as UTF8
@@ -35,10 +36,14 @@ import Graphics.X11.ExtraTypes.XF86
 import qualified XMonad.StackSet as W
 import qualified Data.Map as M
 import qualified Data.ByteString as B
-import Control.Monad (liftM2)
+import Control.Monad ( liftM2, unless, when, unless, when )
 import qualified DBus as D
 import qualified DBus.Client as D
 import qualified XMonad.StackSet as S
+import XMonad.Prelude (isNothing)
+import XMonad.Actions.DynamicWorkspaces (appendWorkspace, removeEmptyWorkspaceAfter)
+import GHC.Settings (maybeRead)
+import Data.Maybe (fromMaybe)
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
@@ -69,9 +74,9 @@ altKeyMask = mod1Mask
 encodeCChar = map fromIntegral . B.unpack
 myFocusFollowsMouse = True
 myBorderWidth = 2
-myWorkspaces    = ["\61612","\61899","\61947","\61635","\61502","\61501","\61705","\61564","\62150","\61872"]
---myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
---myWorkspaces    = ["I","II","III","IV","V","VI","VII","VIII","IX","X"]
+-- myWorkspaces    = ["\61612","\61899","\61947","\61635","\61502","\61501","\61705","\61564","\62150","\61872"]
+-- myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
+myWorkspaces    = ["0"]
 
 myBaseConfig = desktopConfig
 
@@ -134,18 +139,63 @@ myMouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
 
     ]
 
+popup :: String -> X()
+popup message = do
+    spawn $ "zenity --info --text " ++ show message
+
+getCurrentWorkspace :: X (S.Workspace WorkspaceId (Layout Window) Window)
+getCurrentWorkspace = S.workspace . S.current <$> gets windowset
+
 toggleFullscreen :: X()
 toggleFullscreen = do
-    windows <- gets windowset
-    let layout = description $ S.layout $ S.workspace $ S.current windows
+    ws <- getCurrentWorkspace
+    let layout = description $ S.layout ws
     sendMessage $ JumpToLayout (if layout /= "Spacing Full" && layout /= "Full" then "Full" else "Tall")
+
+isCurrentWorkspaceEmpty :: X Bool
+isCurrentWorkspaceEmpty = isNothing . W.stack <$> getCurrentWorkspace
+
+onNotEmptyWorkspace :: Bool -> X() -> X() -> X()
+onNotEmptyWorkspace isToEmpty action reverseAction = do
+    isCurrentEmpty <- isCurrentWorkspaceEmpty
+    action
+    isNewEmpty <- isCurrentWorkspaceEmpty
+    if isToEmpty
+    then when (isCurrentEmpty && isNewEmpty) reverseAction
+    else when isNewEmpty reverseAction
+
+-- workspace management
+
+myPrevWS :: X()
+myPrevWS = do
+    oldWS <- getCurrentWorkspace
+    removeEmptyWorkspaceAfter prevWS
+    newWS <- getCurrentWorkspace
+    fromMaybe (return ()) $ do
+        oldIndex <- maybeRead $ S.tag oldWS
+        newIndex <- maybeRead $ S.tag newWS
+        return $ unless ((newIndex :: Int) < (oldIndex :: Int)) nextWS
+    -- return ()
+
+myNextWS :: X()
+myNextWS = do
+    oldWS <- getCurrentWorkspace
+    removeEmptyWorkspaceAfter nextWS
+    newWS <- getCurrentWorkspace
+    fromMaybe (return ()) $ do
+        oldIndex <- maybeRead $ S.tag oldWS
+        newIndex <- maybeRead $ S.tag newWS
+        return $ unless ((newIndex :: Int) > (oldIndex :: Int)) $ do 
+            appendWorkspace $ show $ oldIndex + 1
+
 
 -- keys config
 
+myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     ----------------------------------------------------------------------
 
-    [ ((modMask, xK_space), spawn myMenu)
+    [ ((modMask, xK_space), spawn myMenu >> windows W.swapMaster)
 
     -- SUPER + FUNCTION KEYS
     , ((modMask, xK_b), spawn myBrowser)
@@ -153,7 +203,6 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_f ), spawn myFiles)
     , ((modMask, xK_x), spawn "archlinux-logout" )
     , ((modMask, xK_c), spawn myCodeEditor)
-    , ((modMask, xK_m), toggleFullscreen)
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
 
@@ -172,16 +221,16 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     -- ALT + ... KEYS
 
-    , ((mod1Mask, xK_f), spawn "variety -f" )
-    , ((mod1Mask, xK_n), spawn "variety -n" )
-    , ((mod1Mask, xK_p), spawn "variety -p" )
-    , ((mod1Mask, xK_t), spawn "variety -t" )
-    , ((mod1Mask, xK_Up), spawn "variety --pause" )
-    , ((mod1Mask, xK_Down), spawn "variety --resume" )
-    , ((mod1Mask, xK_Left), spawn "variety -p" )
-    , ((mod1Mask, xK_Right), spawn "variety -n" )
-    , ((mod1Mask, xK_F2), spawn "xfce4-appfinder --collapsed" )
-    , ((mod1Mask, xK_F3), spawn "xfce4-appfinder" )
+    -- , ((mod1Mask, xK_f), spawn "variety -f" )
+    -- , ((mod1Mask, xK_n), spawn "variety -n" )
+    -- , ((mod1Mask, xK_p), spawn "variety -p" )
+    -- , ((mod1Mask, xK_t), spawn "variety -t" )
+    -- , ((mod1Mask, xK_Up), spawn "variety --pause" )
+    -- , ((mod1Mask, xK_Down), spawn "variety --resume" )
+    -- , ((mod1Mask, xK_Left), spawn "variety -p" )
+    -- , ((mod1Mask, xK_Right), spawn "variety -n" )
+    -- , ((mod1Mask, xK_F2), spawn "xfce4-appfinder --collapsed" )
+    -- , ((mod1Mask, xK_F3), spawn "xfce4-appfinder" )
 
     --VARIETY KEYS WITH PYWAL
 
@@ -246,9 +295,9 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_Return), sendMessage NextLayout)
 
     --Focus selected desktop
-    , ((modMask .|. controlMask , xK_j ), nextWS)
+    , ((modMask .|. controlMask , xK_j ), myNextWS)
 
-    , ((modMask .|. controlMask , xK_k ), prevWS)
+    , ((modMask .|. controlMask , xK_k ), myPrevWS)
 
     -- move windows between workspaces
 
@@ -264,28 +313,31 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     , ((modMask, xK_k), windows W.focusUp  )
 
+    -- Shrink the master area.
+    , ((modMask , xK_h), sendMessage Shrink)
+
+    -- Expand the master area.
+    , ((modMask , xK_l), sendMessage Expand)
+
     -- Move focus to the master window.
-    , ((modMask .|. shiftMask, xK_m), windows W.focusMaster  )
+    , ((modMask .|. altKeyMask, xK_m), windows W.focusMaster)
 
     -- Swap the focused window 
     , ((modMask .|. altKeyMask, xK_j), windows W.swapDown  )
 
     , ((modMask .|. altKeyMask, xK_k), windows W.swapUp    )
 
-    -- Shrink the master area.
-    , ((modMask .|. altKeyMask , xK_h), sendMessage Shrink)
-
-    -- Expand the master area.
-    , ((modMask .|. altKeyMask , xK_l), sendMessage Expand)
-
-    -- Push window back into tiling.
-    , ((controlMask .|. shiftMask , xK_t), withFocused $ windows . W.sink)
-
     -- Increment the number of windows in the master area.
-    , ((controlMask .|. modMask, xK_Left), sendMessage (IncMasterN 1))
+    , ((modMask .|. altKeyMask, xK_h), sendMessage (IncMasterN 1))
 
     -- Decrement the number of windows in the master area.
-    , ((controlMask .|. modMask, xK_Right), sendMessage (IncMasterN (-1)))
+    , ((modMask .|. altKeyMask, xK_l), sendMessage (IncMasterN (-1)))
+
+    -- maximize
+    , ((modMask, xK_m), toggleFullscreen)
+
+    -- Push window back into tiling.
+    , ((modMask .|. altKeyMask , xK_t), withFocused $ windows . W.sink)
 
     ]
     ++
