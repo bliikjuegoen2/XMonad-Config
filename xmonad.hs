@@ -41,9 +41,11 @@ import qualified DBus as D
 import qualified DBus.Client as D
 import qualified XMonad.StackSet as S
 import XMonad.Prelude (isNothing)
-import XMonad.Actions.DynamicWorkspaces (appendWorkspace, removeEmptyWorkspaceAfter)
+import XMonad.Actions.DynamicWorkspaces (appendWorkspace, removeEmptyWorkspaceAfter, removeEmptyWorkspace, addHiddenWorkspace)
 import GHC.Settings (maybeRead)
 import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
+import XMonad.Util.WorkspaceCompare (getSortByIndex)
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
@@ -75,8 +77,8 @@ encodeCChar = map fromIntegral . B.unpack
 myFocusFollowsMouse = True
 myBorderWidth = 2
 -- myWorkspaces    = ["\61612","\61899","\61947","\61635","\61502","\61501","\61705","\61564","\62150","\61872"]
--- myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
-myWorkspaces    = ["0"]
+myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
+-- myWorkspaces    = ["0"]
 
 myBaseConfig = desktopConfig
 
@@ -155,38 +157,38 @@ toggleFullscreen = do
 isCurrentWorkspaceEmpty :: X Bool
 isCurrentWorkspaceEmpty = isNothing . W.stack <$> getCurrentWorkspace
 
-onNotEmptyWorkspace :: Bool -> X() -> X() -> X()
-onNotEmptyWorkspace isToEmpty action reverseAction = do
-    isCurrentEmpty <- isCurrentWorkspaceEmpty
-    action
-    isNewEmpty <- isCurrentWorkspaceEmpty
-    if isToEmpty
-    then when (isCurrentEmpty && isNewEmpty) reverseAction
-    else when isNewEmpty reverseAction
+-- onNotEmptyWorkspace :: Bool -> X() -> X() -> X()
+-- onNotEmptyWorkspace isToEmpty action reverseAction = do
+--     isCurrentEmpty <- isCurrentWorkspaceEmpty
+--     action
+--     isNewEmpty <- isCurrentWorkspaceEmpty
+--     if isToEmpty
+--     then when (isCurrentEmpty && isNewEmpty) reverseAction
+--     else when isNewEmpty reverseAction
 
--- workspace management
+gnomeWS :: (Int -> Int -> Bool) -> (Int -> Int -> X()) -> X()
+gnomeWS compareWS action = getIndexMaybeM getCurrentWorkspace (return ()) $ \curIndex-> 
+    doTo Prev 
+        (WSIs $ return $ getIndexMaybe False $ \index-> 
+            index `compareWS` curIndex) 
+        getSortByIndex 
+        -- the flip is to ensure that curIndex is the second argument
+        $ fromReadMaybe (return ()) $ flip action curIndex
+    where
+        fromReadMaybe onFail action = maybe onFail action . readMaybe
+        getIndexMaybe onFail action = fromReadMaybe onFail action . S.tag
+        getIndexMaybeM ws onFail action = ws >>= getIndexMaybe onFail action
 
-myPrevWS :: X()
-myPrevWS = do
-    oldWS <- getCurrentWorkspace
-    removeEmptyWorkspaceAfter prevWS
-    newWS <- getCurrentWorkspace
-    fromMaybe (return ()) $ do
-        oldIndex <- maybeRead $ S.tag oldWS
-        newIndex <- maybeRead $ S.tag newWS
-        return $ unless ((newIndex :: Int) < (oldIndex :: Int)) nextWS
-    -- return ()
+onPrevWS :: X() -> X()
+onPrevWS action = gnomeWS (<=) 
+    $ \index curIndex-> unless (index == curIndex) action
 
-myNextWS :: X()
-myNextWS = do
-    oldWS <- getCurrentWorkspace
-    removeEmptyWorkspaceAfter nextWS
-    newWS <- getCurrentWorkspace
-    fromMaybe (return ()) $ do
-        oldIndex <- maybeRead $ S.tag oldWS
-        newIndex <- maybeRead $ S.tag newWS
-        return $ unless ((newIndex :: Int) > (oldIndex :: Int)) $ do 
-            appendWorkspace $ show $ oldIndex + 1
+onNextWS :: X() -> X()
+onNextWS action = gnomeWS (>=) 
+    $ \index curIndex-> do 
+        when (index == curIndex)
+            $ addHiddenWorkspace $ show $ index + 1
+        action
 
 
 -- keys config
@@ -295,15 +297,15 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_Return), sendMessage NextLayout)
 
     --Focus selected desktop
-    , ((modMask .|. controlMask , xK_j ), myNextWS)
+    , ((modMask .|. controlMask , xK_j ), onNextWS $ removeEmptyWorkspaceAfter nextWS)
 
-    , ((modMask .|. controlMask , xK_k ), myPrevWS)
+    , ((modMask .|. controlMask , xK_k ), onPrevWS $ removeEmptyWorkspaceAfter prevWS)
 
     -- move windows between workspaces
 
-    , ((modMask .|. shiftMask, xK_j ), shiftToNext >> nextWS)
+    , ((modMask .|. shiftMask, xK_j ), onNextWS $ shiftToNext >> removeEmptyWorkspaceAfter nextWS)
 
-    , ((modMask .|. shiftMask, xK_k), shiftToPrev >> prevWS)
+    , ((modMask .|. shiftMask, xK_k), onPrevWS $ shiftToPrev >> removeEmptyWorkspaceAfter prevWS)
 
     --  Reset the layouts on the current workspace to default.
     , ((modMask .|. shiftMask, xK_space), setLayout $ XMonad.layoutHook conf)
