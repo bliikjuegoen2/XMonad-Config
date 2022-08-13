@@ -207,16 +207,19 @@ gnomeWS dir compareWS action = getIndexMaybeM getCurrentWorkspace (return ()) $ 
         getIndexMaybe onFail action = fromReadMaybe onFail action . S.tag
         getIndexMaybeM ws onFail action = ws >>= getIndexMaybe onFail action
 
+{-# ANN onWS_DNE_DoNothing "HLint: ignore" #-}
+onWS_DNE_DoNothing :: X() -> Int -> Int -> X()
+onWS_DNE_DoNothing action index curIndex = unless (index == curIndex) action
+
+{-# ANN onWS_DNE_AddWS "HLint: ignore" #-}
+onWS_DNE_AddWS :: X() -> Int -> Int -> X()
+onWS_DNE_AddWS action index curIndex = when (index == curIndex) (addHiddenWorkspace $ show $ index + 1) >> action
+
 onPrevWS :: X() -> X()
-onPrevWS action = gnomeWS Prev (<=) 
-    $ \index curIndex-> unless (index == curIndex) action
+onPrevWS = gnomeWS Prev (<=) . onWS_DNE_DoNothing
 
 onNextWS :: X() -> X()
-onNextWS action = gnomeWS Next (>=) 
-    $ \index curIndex-> do 
-        when (index == curIndex)
-            $ addHiddenWorkspace $ show $ index + 1
-        action
+onNextWS = gnomeWS Next (>=) . onWS_DNE_AddWS
 
 -- newtype ShowEvent = ShowEvent Bool 
 
