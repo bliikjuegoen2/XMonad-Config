@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 import System.IO
 import System.Exit
 
@@ -46,6 +47,8 @@ import GHC.Settings (maybeRead)
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import XMonad.Util.WorkspaceCompare (getSortByIndex)
+import qualified XMonad.Util.Hacks as Hacks
+import qualified XMonad.Util.NamedWindows as NW
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
@@ -61,7 +64,7 @@ myStartupHook = do
 
 -- colours
 normBord = "#4c566a"
-focdBord = "#5e81ac"
+focdBord = "#FF5F1F"
 fore     = "#DEE3E0"
 back     = "#282c34"
 winType  = "#c678dd"
@@ -75,10 +78,10 @@ myModMask = mod4Mask
 altKeyMask = mod1Mask
 encodeCChar = map fromIntegral . B.unpack
 myFocusFollowsMouse = True
-myBorderWidth = 2
+myBorderWidth = 5
 -- myWorkspaces    = ["\61612","\61899","\61947","\61635","\61502","\61501","\61705","\61564","\62150","\61872"]
-myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
--- myWorkspaces    = ["0"]
+-- myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
+myWorkspaces    = ["0"]
 
 myBaseConfig = desktopConfig
 
@@ -148,11 +151,32 @@ popup message = do
 getCurrentWorkspace :: X (S.Workspace WorkspaceId (Layout Window) Window)
 getCurrentWorkspace = S.workspace . S.current <$> gets windowset
 
-toggleFullscreen :: X()
-toggleFullscreen = do
-    ws <- getCurrentWorkspace
-    let layout = description $ S.layout ws
-    sendMessage $ JumpToLayout (if layout /= "Spacing Full" && layout /= "Full" then "Full" else "Tall")
+data MaximizeData 
+    = MaximizeData Bool (Layout Window)
+    deriving (Show)
+
+instance ExtensionClass MaximizeData where
+    initialValue = MaximizeData False $ Layout Full
+
+unmaximizeWith :: Layout Window -> X ()
+unmaximizeWith layout = do 
+    setLayout layout
+    ST.put $ MaximizeData False layout
+
+maximize :: X ()
+maximize = do 
+    layout <- S.layout <$> getCurrentWorkspace
+    setLayout $ Layout Full
+    ST.put $ MaximizeData True layout
+
+
+
+toggleFullscreen :: Bool -> X()
+toggleFullscreen doesMaximize = ST.get >>= \case
+    MaximizeData True prevLayout -> unmaximizeWith prevLayout
+    MaximizeData False _ 
+        | doesMaximize -> maximize
+        | otherwise -> return ()
 
 isCurrentWorkspaceEmpty :: X Bool
 isCurrentWorkspaceEmpty = isNothing . W.stack <$> getCurrentWorkspace
@@ -166,9 +190,13 @@ isCurrentWorkspaceEmpty = isNothing . W.stack <$> getCurrentWorkspace
 --     then when (isCurrentEmpty && isNewEmpty) reverseAction
 --     else when isNewEmpty reverseAction
 
-gnomeWS :: (Int -> Int -> Bool) -> (Int -> Int -> X()) -> X()
-gnomeWS compareWS action = getIndexMaybeM getCurrentWorkspace (return ()) $ \curIndex-> 
-    doTo Prev 
+-- Workspace Management Stuff
+
+gnomeWS :: Direction1D -> (Int -> Int -> Bool) -> (Int -> Int -> X()) -> X()
+gnomeWS dir compareWS action = getIndexMaybeM getCurrentWorkspace (return ()) $ \curIndex-> do
+    -- makes sure everything is minimized
+    toggleFullscreen False
+    doTo dir 
         (WSIs $ return $ getIndexMaybe False $ \index-> 
             index `compareWS` curIndex) 
         getSortByIndex 
@@ -180,15 +208,28 @@ gnomeWS compareWS action = getIndexMaybeM getCurrentWorkspace (return ()) $ \cur
         getIndexMaybeM ws onFail action = ws >>= getIndexMaybe onFail action
 
 onPrevWS :: X() -> X()
-onPrevWS action = gnomeWS (<=) 
+onPrevWS action = gnomeWS Prev (<=) 
     $ \index curIndex-> unless (index == curIndex) action
 
 onNextWS :: X() -> X()
-onNextWS action = gnomeWS (>=) 
+onNextWS action = gnomeWS Next (>=) 
     $ \index curIndex-> do 
         when (index == curIndex)
             $ addHiddenWorkspace $ show $ index + 1
         action
+
+-- newtype ShowEvent = ShowEvent Bool 
+
+-- instance ExtensionClass ShowEvent where 
+--     initialValue = ShowEvent False
+
+-- myEventHook event = do 
+--     case event of 
+--         DestroyWindowEvent event_type serial send_event event_display ev_event window -> {-ST.get >>= \(ShowEvent showEvent)-> when showEvent $-} do 
+--             nwindow <- NW.getName ev_event
+--             popup $ "event: " ++ show nwindow
+--             ST.put $ ShowEvent False
+--         _ -> return()
 
 
 -- keys config
@@ -205,8 +246,11 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_f ), spawn myFiles)
     , ((modMask, xK_x), spawn "archlinux-logout" )
     , ((modMask, xK_c), spawn myCodeEditor)
+    , ((modMask, xK_d), spawn "flatpak run com.discordapp.Discord")
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
+
+    -- , ((modMask, xK_equal), ST.put (ShowEvent True))
 
     -- -- FUNCTION KEYS
     -- , ((0, xK_F12), spawn "xfce4-terminal --drop-down" )
@@ -236,11 +280,11 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     --VARIETY KEYS WITH PYWAL
 
-    , ((mod1Mask .|. shiftMask , xK_f ), spawn "variety -f && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_n ), spawn "variety -n && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_p ), spawn "variety -p && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_t ), spawn "variety -t && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
-    , ((mod1Mask .|. shiftMask , xK_u ), spawn "wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    -- , ((mod1Mask .|. shiftMask , xK_f ), spawn "variety -f && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    -- , ((mod1Mask .|. shiftMask , xK_n ), spawn "variety -n && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    -- , ((mod1Mask .|. shiftMask , xK_p ), spawn "variety -p && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    -- , ((mod1Mask .|. shiftMask , xK_t ), spawn "variety -t && wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
+    -- , ((mod1Mask .|. shiftMask , xK_u ), spawn "wal -i $(cat $HOME/.config/variety/wallpaper/wallpaper.jpg.txt)&")
 
     --CONTROL + SHIFT KEYS
 
@@ -322,7 +366,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask , xK_l), sendMessage Expand)
 
     -- Move focus to the master window.
-    , ((modMask .|. altKeyMask, xK_m), windows W.focusMaster)
+    , ((modMask, xK_g), windows W.focusMaster)
 
     -- Swap the focused window 
     , ((modMask .|. altKeyMask, xK_j), windows W.swapDown  )
@@ -336,7 +380,8 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask .|. altKeyMask, xK_l), sendMessage (IncMasterN (-1)))
 
     -- maximize
-    , ((modMask, xK_m), toggleFullscreen)
+    -- xK_equal should be the same as the plus key
+    , ((modMask, xK_m), toggleFullscreen True)
 
     -- Push window back into tiling.
     , ((modMask .|. altKeyMask , xK_t), withFocused $ windows . W.sink)
@@ -395,7 +440,7 @@ main = do
 , manageHook = manageSpawn <+> myManageHook <+> manageHook myBaseConfig
 , modMask = myModMask
 , borderWidth = myBorderWidth
-, handleEventHook    = handleEventHook myBaseConfig
+, handleEventHook    =  handleEventHook myBaseConfig <> Hacks.windowedFullscreenFixEventHook
 , focusFollowsMouse = myFocusFollowsMouse
 , workspaces = myWorkspaces
 , focusedBorderColor = focdBord
