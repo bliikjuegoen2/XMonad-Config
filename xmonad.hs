@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 import System.IO
 import System.Exit
 
@@ -7,7 +8,7 @@ import XMonad.Hooks.SetWMName
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.ManageHelpers(doFullFloat, doCenterFloat, isFullscreen, isDialog)
+import XMonad.Hooks.ManageHelpers(doFullFloat, doCenterFloat, isFullscreen, isDialog, doRectFloat)
 import XMonad.Config.Desktop
 import XMonad.Config.Azerty
 import XMonad.Util.Run(spawnPipe)
@@ -37,11 +38,11 @@ import Graphics.X11.ExtraTypes.XF86
 import qualified XMonad.StackSet as W
 import qualified Data.Map as M
 import qualified Data.ByteString as B
-import Control.Monad ( liftM2, unless, when, unless, when )
+import Control.Monad ( liftM2, unless, when, unless, when, (>=>), void )
 import qualified DBus as D
 import qualified DBus.Client as D
 import qualified XMonad.StackSet as S
-import XMonad.Prelude (isNothing)
+import XMonad.Prelude (isNothing, intercalate)
 import XMonad.Actions.DynamicWorkspaces (appendWorkspace, removeEmptyWorkspaceAfter, removeEmptyWorkspace, addHiddenWorkspace)
 import GHC.Settings (maybeRead)
 import Data.Maybe (fromMaybe)
@@ -49,6 +50,11 @@ import Text.Read (readMaybe)
 import XMonad.Util.WorkspaceCompare (getSortByIndex)
 import qualified XMonad.Util.Hacks as Hacks
 import qualified XMonad.Util.NamedWindows as NW
+import XMonad.Actions.MouseResize (mouseResize)
+import XMonad.Layout.WindowArranger (windowArrange)
+import qualified XMonad.Util.NamedWindows as NWIN
+import Control.Arrow ((>>>), (&&&), Arrow (first))
+import XMonad.StackSet (RationalRect(RationalRect))
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
@@ -63,7 +69,7 @@ myStartupHook = do
     setWMName "LG3D"
 
 -- colours
-normBord = "#4c566a"
+normBord = "#1F456E"
 focdBord = "#FF5F1F"
 fore     = "#DEE3E0"
 back     = "#282c34"
@@ -78,7 +84,7 @@ myModMask = mod4Mask
 altKeyMask = mod1Mask
 encodeCChar = map fromIntegral . B.unpack
 myFocusFollowsMouse = True
-myBorderWidth = 5
+myBorderWidth = 3
 -- myWorkspaces    = ["\61612","\61899","\61947","\61635","\61502","\61501","\61705","\61564","\62150","\61872"]
 -- myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
 myWorkspaces    = ["0"]
@@ -92,6 +98,8 @@ myManageHook = composeAll . concat $
     , [title =? t --> doFloat | t <- myTFloats]
     , [resource =? r --> doFloat | r <- myRFloats]
     , [resource =? i --> doIgnore | i <- myIgnores]
+    , [title =? "Whisker Menu" --> doRectFloat (RationalRect 0 0 1 0.97)]
+    , [className =? "Guake" --> doRectFloat (RationalRect 0 0 1 0.6)]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61612" | x <- my1Shifts]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61899" | x <- my2Shifts]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61947" | x <- my3Shifts]
@@ -151,7 +159,7 @@ popup message = do
 getCurrentWorkspace :: X (S.Workspace WorkspaceId (Layout Window) Window)
 getCurrentWorkspace = S.workspace . S.current <$> gets windowset
 
-data MaximizeData 
+data MaximizeData
     = MaximizeData Bool (Layout Window)
     deriving (Show)
 
@@ -159,12 +167,12 @@ instance ExtensionClass MaximizeData where
     initialValue = MaximizeData False $ Layout Full
 
 unmaximizeWith :: Layout Window -> X ()
-unmaximizeWith layout = do 
+unmaximizeWith layout = do
     setLayout layout
     ST.put $ MaximizeData False layout
 
 maximize :: X ()
-maximize = do 
+maximize = do
     layout <- S.layout <$> getCurrentWorkspace
     setLayout $ Layout Full
     ST.put $ MaximizeData True layout
@@ -174,7 +182,7 @@ maximize = do
 toggleFullscreen :: Bool -> X()
 toggleFullscreen doesMaximize = ST.get >>= \case
     MaximizeData True prevLayout -> unmaximizeWith prevLayout
-    MaximizeData False _ 
+    MaximizeData False _
         | doesMaximize -> maximize
         | otherwise -> return ()
 
@@ -196,10 +204,10 @@ gnomeWS :: Direction1D -> (Int -> Int -> Bool) -> (Int -> Int -> X()) -> X()
 gnomeWS dir compareWS action = getIndexMaybeM getCurrentWorkspace (return ()) $ \curIndex-> do
     -- makes sure everything is minimized
     toggleFullscreen False
-    doTo dir 
-        (WSIs $ return $ getIndexMaybe False $ \index-> 
-            index `compareWS` curIndex) 
-        getSortByIndex 
+    doTo dir
+        (WSIs $ return $ getIndexMaybe False $ \index->
+            index `compareWS` curIndex)
+        getSortByIndex
         -- the flip is to ensure that curIndex is the second argument
         $ fromReadMaybe (return ()) $ flip action curIndex
     where
@@ -235,13 +243,25 @@ onNextWS = gnomeWS Next (>=) . onWS_DNE_AddWS
 --         _ -> return()
 
 
+getWindowNames :: X ()
+getWindowNames = withWindowSet (fmap (intercalate "\n>=>=>\n") . mapM (NWIN.getName >=> return . show) . S.index >=> popup)
+
+findWindow :: String -> (Window -> X()) -> X()
+findWindow winName f = withWindowSet ( 
+    S.index
+    >>> mapM (\win ->
+        NWIN.getName win
+        >>= (show >>> (, win) >>> return)
+        >>= (\(name,win)->when (name == winName) $ f win))
+    >>> void)
+
 -- keys config
 
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     ----------------------------------------------------------------------
 
-    [ ((modMask, xK_space), spawn myMenu >> windows W.swapMaster)
+    [ ((modMask, xK_space), spawn myMenu)
 
     -- SUPER + FUNCTION KEYS
     , ((modMask, xK_b), spawn myBrowser)
