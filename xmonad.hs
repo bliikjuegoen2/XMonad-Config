@@ -87,7 +87,7 @@ myFocusFollowsMouse = True
 myBorderWidth = 3
 -- myWorkspaces    = ["\61612","\61899","\61947","\61635","\61502","\61501","\61705","\61564","\62150","\61872"]
 -- myWorkspaces    = ["1","2","3","4","5","6","7","8","9","10"]
-myWorkspaces    = ["0"]
+myWorkspaces    = ["0000"]
 
 myBaseConfig = desktopConfig
 
@@ -223,7 +223,11 @@ onWS_DNE_DoNothing action index curIndex = unless (index == curIndex) action
 
 {-# ANN onWS_DNE_AddWS "HLint: ignore" #-}
 onWS_DNE_AddWS :: X() -> Int -> Int -> X()
-onWS_DNE_AddWS action index curIndex = when (index == curIndex) (addHiddenWorkspace $ show $ index + 1) >> action
+onWS_DNE_AddWS action index curIndex = unless (padding < 0) $ when (index == curIndex) (addHiddenWorkspace $ replicate padding '0' ++ tag) >> action 
+    where 
+        tag = show $ index + 1
+        -- the padding is need or else a bug would appear at WS 10
+        padding = 4 - length tag
 
 onPrevWS :: X() -> X()
 onPrevWS = gnomeWS Prev (<=) . onWS_DNE_DoNothing
