@@ -9,4 +9,7 @@ try:
 except sp.CalledProcessError as error:
     out = error.output
 
-sp.run("zenity --info --text".split() + [out])
+if out == "":
+    out = "There has probably been an error. Recheck your .xmonad file"
+# must be zenity cant be yad
+sp.run("yad --info --text".split() + [out])

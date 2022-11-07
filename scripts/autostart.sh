@@ -39,6 +39,9 @@ feh --bg-fill $myWallpaper &
 # enable reverse scrolling
 xinput set-prop 'SYNA7DAB:00 06CB:CD40 Touchpad' 'libinput Natural Scrolling Enabled' 1 &
 
+# enable mouse while typing
+xinput set-prop "SYNA7DAB:00 06CB:CD40 Touchpad" "libinput Disable While Typing Enabled" 0 &
+
 #starting utility applications at boot time
 # run variety &
 run nm-applet &

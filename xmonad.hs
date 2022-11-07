@@ -100,6 +100,8 @@ myManageHook = composeAll . concat $
     , [resource =? i --> doIgnore | i <- myIgnores]
     , [title =? "Whisker Menu" --> doRectFloat (RationalRect 0 0 1 0.97)]
     , [className =? "Guake" --> doRectFloat (RationalRect 0 0 1 0.6)]
+    , [className =? "Archlinux-logout.py" --> doFullFloat]
+    -- , [className =? "Yad" --> doCenterFloat]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61612" | x <- my1Shifts]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61899" | x <- my2Shifts]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61947" | x <- my3Shifts]
@@ -113,7 +115,7 @@ myManageHook = composeAll . concat $
     ]
     where
     -- doShiftAndGo = doF . liftM2 (.) W.greedyView W.shift
-    myCFloats = ["Arandr", "Arcolinux-calamares-tool.py", "Archlinux-tweak-tool.py", "Arcolinux-welcome-app.py", "Galculator", "feh", "mpv", "Xfce4-terminal"]
+    myCFloats = ["Arandr", "Arcolinux-calamares-tool.py", "Archlinux-tweak-tool.py", "Arcolinux-welcome-app.py", "Galculator", "feh", "mpv", "Xfce4-terminal", "Yad"]
     myTFloats = ["Downloads", "Save As..."]
     myRFloats = []
     myIgnores = ["desktop_window"]
@@ -154,7 +156,7 @@ myMouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
 
 popup :: String -> X()
 popup message = do
-    spawn $ "zenity --info --text " ++ show message
+    spawn $ "yad --info --text " ++ show message
 
 getCurrentWorkspace :: X (S.Workspace WorkspaceId (Layout Window) Window)
 getCurrentWorkspace = S.workspace . S.current <$> gets windowset
@@ -270,6 +272,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_x), spawn "archlinux-logout" )
     , ((modMask, xK_c), spawn myCodeEditor)
     , ((modMask, xK_d), spawn "flatpak run com.discordapp.Discord")
+    , ((modMask, xK_v), spawn "xournalpp")
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
 
@@ -395,6 +398,8 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask .|. altKeyMask, xK_j), windows W.swapDown  )
 
     , ((modMask .|. altKeyMask, xK_k), windows W.swapUp    )
+
+    , ((modMask .|. altKeyMask, xK_g), windows W.swapMaster)
 
     -- Increment the number of windows in the master area.
     , ((modMask .|. altKeyMask, xK_h), sendMessage (IncMasterN 1))
