@@ -287,7 +287,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     -- ALT Keys (reloading xmonad)
 
-    , ((altKeyMask .|. modMask , xK_r ), spawn "$HOME/.xmonad/scripts/recompile.py && xmonad --restart")
+    , ((altKeyMask .|. modMask , xK_r ), spawn "$HOME/.xmonad/scripts/recompile.fish && xmonad --restart")
     , ((altKeyMask, xK_r), spawn "xmonad --restart" )
     -- , ((modMask .|. shiftMask , xK_x ), io (exitWith ExitSuccess))
 
