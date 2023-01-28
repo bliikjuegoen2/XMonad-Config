@@ -55,12 +55,13 @@ import XMonad.Layout.WindowArranger (windowArrange)
 import qualified XMonad.Util.NamedWindows as NWIN
 import Control.Arrow ((>>>), (&&&), Arrow (first))
 import XMonad.StackSet (RationalRect(RationalRect))
+import XMonad.Util.NamedScratchpad (NamedScratchpad(NS))
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
 myMenu = "xfce4-popup-whiskermenu"
 myBrowser = "brave"
-myTerminal = "urxvt"
+myTerminal = "kitty"
 myFiles = "thunar"
 myCodeEditor = "code"
 
