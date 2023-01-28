@@ -278,6 +278,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     -- SUPER + FUNCTION KEYS
     , ((modMask, xK_b), spawn myBrowser)
     , ((modMask, xK_t), namedScratchpadAction scratchpads "myTerminal")
+    , ((modMask, xK_Tab), namedScratchpadAction scratchpads "myTerminal")
     , ((modMask, xK_f ), spawn myFiles)
     , ((modMask, xK_x), spawn "archlinux-logout" )
     , ((modMask, xK_c), spawn myCodeEditor)
