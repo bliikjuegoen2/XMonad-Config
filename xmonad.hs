@@ -55,13 +55,14 @@ import XMonad.Layout.WindowArranger (windowArrange)
 import qualified XMonad.Util.NamedWindows as NWIN
 import Control.Arrow ((>>>), (&&&), Arrow (first))
 import XMonad.StackSet (RationalRect(RationalRect))
-import XMonad.Util.NamedScratchpad (NamedScratchpad(NS))
+import XMonad.Util.NamedScratchpad (NamedScratchpad(NS), namedScratchpadManageHook, defaultFloating, namedScratchpadAction, customFloating)
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
 myMenu = "xfce4-popup-whiskermenu"
 myBrowser = "brave"
 myTerminal = "kitty"
+myTerminalClass = "kitty"
 myFiles = "thunar"
 myCodeEditor = "code"
 
@@ -100,7 +101,7 @@ myManageHook = composeAll . concat $
     , [resource =? r --> doFloat | r <- myRFloats]
     , [resource =? i --> doIgnore | i <- myIgnores]
     , [title =? "Whisker Menu" --> doRectFloat (RationalRect 0 0 1 0.97)]
-    , [className =? "Guake" --> doRectFloat (RationalRect 0 0 1 0.6)]
+    , [className =? "Guake" --> doRectFloat (RationalRect 0 0 1 0.5)]
     , [className =? "Archlinux-logout.py" --> doFullFloat]
     -- , [className =? "Yad" --> doCenterFloat]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61612" | x <- my1Shifts]
@@ -153,6 +154,11 @@ myMouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
     -- mod-button3, Set the window to floating mode and resize by dragging
     , ((modMask, 3), \w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster)
 
+    ]
+
+scratchpads = [
+    NS "myTerminal" myTerminal (className =? myTerminalClass) 
+        (customFloating $ W.RationalRect 0 0 1 0.6)
     ]
 
 popup :: String -> X()
@@ -272,7 +278,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     -- SUPER + FUNCTION KEYS
     , ((modMask, xK_b), spawn myBrowser)
-    , ((modMask, xK_t), spawn myTerminal)
+    , ((modMask, xK_t), namedScratchpadAction scratchpads "myTerminal")
     , ((modMask, xK_f ), spawn myFiles)
     , ((modMask, xK_x), spawn "archlinux-logout" )
     , ((modMask, xK_c), spawn myCodeEditor)
@@ -470,7 +476,7 @@ main = do
 
                 {startupHook = myStartupHook
 , layoutHook = gaps [(U,35), (D,5), (R,5), (L,5)] $ myLayout ||| layoutHook myBaseConfig
-, manageHook = manageSpawn <+> myManageHook <+> manageHook myBaseConfig
+, manageHook =namedScratchpadManageHook scratchpads <+> manageSpawn <+> myManageHook <+> manageHook myBaseConfig
 , modMask = myModMask
 , borderWidth = myBorderWidth
 , handleEventHook    =  handleEventHook myBaseConfig <> Hacks.windowedFullscreenFixEventHook
