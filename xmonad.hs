@@ -101,7 +101,6 @@ myManageHook = composeAll . concat $
     , [resource =? r --> doFloat | r <- myRFloats]
     , [resource =? i --> doIgnore | i <- myIgnores]
     , [title =? "Whisker Menu" --> doRectFloat (RationalRect 0 0 1 0.97)]
-    , [className =? "Guake" --> doRectFloat (RationalRect 0 0 1 0.5)]
     , [className =? "Archlinux-logout.py" --> doFullFloat]
     -- , [className =? "Yad" --> doCenterFloat]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61612" | x <- my1Shifts]
