@@ -65,6 +65,7 @@ myTerminal = "kitty"
 myTerminalClass = "kitty"
 myFiles = "thunar"
 myCodeEditor = "code"
+myTextEditor = "gedit"
 
 myStartupHook = do
     spawn "$HOME/.xmonad/scripts/autostart.sh"
@@ -284,6 +285,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_c), spawn myCodeEditor)
     , ((modMask, xK_d), spawn "flatpak run com.discordapp.Discord")
     , ((modMask, xK_v), spawn "xournalpp")
+    , ((modMask, xK_e), spawn myTextEditor)
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
 
