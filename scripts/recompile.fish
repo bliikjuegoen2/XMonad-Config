@@ -1,3 +1,3 @@
 #!/usr/bin/fish
 
-yad --info --text "$(xmonad --recompile &| cat)"
+yad --form --field=compile-info:TXT --field-text "$(xmonad --recompile &| cat)"

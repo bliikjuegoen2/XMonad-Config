@@ -66,6 +66,7 @@ myTerminalClass = "kitty"
 myFiles = "thunar"
 myCodeEditor = "code"
 myTextEditor = "gedit"
+myCalendar = "io.elementary.calendar"
 
 myStartupHook = do
     spawn "$HOME/.xmonad/scripts/autostart.sh"
@@ -157,8 +158,12 @@ myMouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
     ]
 
 scratchpads = [
-    NS "myTerminal" myTerminal (className =? myTerminalClass) 
-        (customFloating $ W.RationalRect 0 0 1 0.6)
+    NS "myTerminal" myTerminal (className =? myTerminalClass)
+        (customFloating $ W.RationalRect 0 0.03 1 0.6)
+    , NS "MSTeams" "teams" (className =? "Microsoft Teams - Preview")
+        doFullFloat
+    , NS "myCalendar" myCalendar (className =? "Io.elementary.calendar")
+        doFullFloat
     ]
 
 popup :: String -> X()
@@ -230,8 +235,8 @@ onWS_DNE_DoNothing action index curIndex = unless (index == curIndex) action
 
 {-# ANN onWS_DNE_AddWS "HLint: ignore" #-}
 onWS_DNE_AddWS :: X() -> Int -> Int -> X()
-onWS_DNE_AddWS action index curIndex = unless (padding < 0) $ when (index == curIndex) (addHiddenWorkspace $ replicate padding '0' ++ tag) >> action 
-    where 
+onWS_DNE_AddWS action index curIndex = unless (padding < 0) $ when (index == curIndex) (addHiddenWorkspace $ replicate padding '0' ++ tag) >> action
+    where
         tag = show $ index + 1
         -- the padding is need or else a bug would appear at WS 10
         padding = 4 - length tag
@@ -260,7 +265,7 @@ getWindowNames :: X ()
 getWindowNames = withWindowSet (fmap (intercalate "\n>=>=>\n") . mapM (NWIN.getName >=> return . show) . S.index >=> popup)
 
 findWindow :: String -> (Window -> X()) -> X()
-findWindow winName f = withWindowSet ( 
+findWindow winName f = withWindowSet (
     S.index
     >>> mapM (\win ->
         NWIN.getName win
@@ -282,9 +287,8 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_Tab), namedScratchpadAction scratchpads "myTerminal")
     , ((modMask, xK_f ), spawn myFiles)
     , ((modMask, xK_x), spawn "archlinux-logout" )
+    , ((modMask, xK_i), spawn "$HOME/.xmonad/scripts/display-xprop.fish")
     , ((modMask, xK_c), spawn myCodeEditor)
-    , ((modMask, xK_d), spawn "flatpak run com.discordapp.Discord")
-    , ((modMask, xK_v), spawn "xournalpp")
     , ((modMask, xK_e), spawn myTextEditor)
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
@@ -426,6 +430,12 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     -- Push window back into tiling.
     , ((modMask .|. altKeyMask , xK_t), withFocused $ windows . W.sink)
+
+    -- APPS
+    , ((altKeyMask, xK_t), namedScratchpadAction scratchpads "MSTeams")
+    , ((altKeyMask, xK_d), spawn "flatpak run com.discordapp.Discord")
+    , ((altKeyMask, xK_v), spawn "xournalpp")
+    , ((altKeyMask, xK_c), namedScratchpadAction scratchpads "myCalendar")
 
     ]
     ++
