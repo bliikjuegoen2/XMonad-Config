@@ -118,7 +118,17 @@ myManageHook = composeAll . concat $
     ]
     where
     -- doShiftAndGo = doF . liftM2 (.) W.greedyView W.shift
-    myCFloats = ["Arandr", "Arcolinux-calamares-tool.py", "Archlinux-tweak-tool.py", "Arcolinux-welcome-app.py", "Galculator", "feh", "mpv", "Xfce4-terminal", "Yad"]
+    myCFloats = [
+        "Arandr"
+        , "Arcolinux-calamares-tool.py"
+        , "Archlinux-tweak-tool.py"
+        , "Arcolinux-welcome-app.py"
+        , "Galculator"
+        , "feh"
+        , "mpv"
+        , "Xfce4-terminal"
+        , "Yad"
+        ]
     myTFloats = ["Downloads", "Save As..."]
     myRFloats = []
     myIgnores = ["desktop_window"]
@@ -161,9 +171,9 @@ scratchpads = [
     NS "myTerminal" myTerminal (className =? myTerminalClass)
         (customFloating $ W.RationalRect 0 0.03 1 0.6)
     , NS "MSTeams" "teams" (className =? "Microsoft Teams - Preview")
-        doFullFloat
+        doCenterFloat
     , NS "myCalendar" myCalendar (className =? "Io.elementary.calendar")
-        doFullFloat
+        doCenterFloat
     ]
 
 popup :: String -> X()
@@ -432,10 +442,10 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask .|. altKeyMask , xK_t), withFocused $ windows . W.sink)
 
     -- APPS
-    , ((altKeyMask, xK_t), namedScratchpadAction scratchpads "MSTeams")
-    , ((altKeyMask, xK_d), spawn "flatpak run com.discordapp.Discord")
-    , ((altKeyMask, xK_v), spawn "xournalpp")
-    , ((altKeyMask, xK_c), namedScratchpadAction scratchpads "myCalendar")
+    , ((controlMask .|. altKeyMask, xK_t), namedScratchpadAction scratchpads "MSTeams")
+    , ((controlMask .|. altKeyMask, xK_d), spawn "flatpak run com.discordapp.Discord")
+    , ((controlMask .|. altKeyMask, xK_v), spawn "xournalpp")
+    , ((controlMask .|. altKeyMask, xK_c), namedScratchpadAction scratchpads "myCalendar")
 
     ]
     ++
