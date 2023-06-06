@@ -103,6 +103,7 @@ myManageHook = composeAll . concat $
     , [resource =? r --> doFloat | r <- myRFloats]
     , [resource =? i --> doIgnore | i <- myIgnores]
     , [title =? "Whisker Menu" --> doRectFloat (RationalRect 0 0 1 0.97)]
+    , [title =? "xfdashboard" --> doRectFloat (RationalRect 0 0.03 1 0.97)]
     , [className =? "Archlinux-logout.py" --> doFullFloat]
     -- , [className =? "Yad" --> doCenterFloat]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61612" | x <- my1Shifts]
@@ -128,6 +129,7 @@ myManageHook = composeAll . concat $
         , "mpv"
         , "Xfce4-terminal"
         , "Yad"
+        , "ROOT"
         ]
     myTFloats = ["Downloads", "Save As..."]
     myRFloats = []
@@ -341,7 +343,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     --CONTROL + SHIFT KEYS
 
-    , ((controlMask .|. shiftMask , xK_Escape ), spawn "xfce4-taskmanager")
+    , ((controlMask .|. altKeyMask , xK_Delete ), spawn "xfce4-taskmanager")
 
     --SCREENSHOTS
 

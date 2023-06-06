@@ -42,6 +42,13 @@ xinput set-prop 'SYNA7DAB:00 06CB:CD40 Touchpad' 'libinput Natural Scrolling Ena
 # enable mouse while typing
 xinput set-prop "SYNA7DAB:00 06CB:CD40 Touchpad" "libinput Disable While Typing Enabled" 0 &
 
+
+# disable numlock key
+numlockx off
+
+# enable autolocking
+xautolock -time 5 -locker "betterlockscreen -l dim" -notify 10 -notifier "yad --info --text='locking in 10 seconds'" &
+
 #starting utility applications at boot time
 # run variety &
 run nm-applet &
