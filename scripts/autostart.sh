@@ -27,6 +27,9 @@ function run {
 #cursor active at boot
 xsetroot -cursor_name left_ptr &
 
+# start panel - ideally should be at start so that system is usable right away
+xfce4-panel &
+
 #start ArcoLinux Welcome App
 # run dex $HOME/.config/autostart/arcolinux-welcome-app.desktop
 
@@ -60,7 +63,6 @@ blueberry-tray &
 picom --config $HOME/.xmonad/scripts/picom.conf &
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 /usr/lib/xfce4/notifyd/xfce4-notifyd &
-xfce4-panel &
 
 #starting user applications at boot time
 #nitrogen --restore &
