@@ -1,6 +1,7 @@
 #!/bin/bash
 
 myWallpaper="/home/bliikjuegoen/Pictures/space.jpg";
+SCRIPTS=$HOME/.xmonad/scripts
 
 function run {
   if ! pgrep $1 ;
@@ -8,6 +9,7 @@ function run {
     $@&
   fi
 }
+
 
 #Set your native resolution IF it does not exist in xrandr
 #More info in the script
@@ -47,10 +49,16 @@ xinput set-prop "SYNA7DAB:00 06CB:CD40 Touchpad" "libinput Disable While Typing 
 
 
 # disable numlock key
-numlockx off
+$SCRIPTS/disable-numlock.fish
 
 # enable autolocking
-xautolock -time 5 -locker "betterlockscreen -l dim" -notify 10 -notifier "yad --info --text='locking in 10 seconds'" &
+xautolock -time 5 -locker "betterlockscreen -l dim" -notify 10 -notifier "yad --info --text='locking in 10 seconds'" -bell -restart &
+
+# enable redshift
+/usr/lib/geoclue-2.0/demos/agent &
+
+# start redshift
+$SCRIPTS/start-redshift.fish &
 
 #starting utility applications at boot time
 # run variety &
@@ -58,11 +66,11 @@ run nm-applet &
 run pamac-tray &
 run xfce4-power-manager &
 run volumeicon &
-numlockx on &
 blueberry-tray &
-picom --config $HOME/.xmonad/scripts/picom.conf &
+picom --experimental-backends -b --config $SCRIPTS/picom.conf &
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 /usr/lib/xfce4/notifyd/xfce4-notifyd &
+
 
 #starting user applications at boot time
 #nitrogen --restore &

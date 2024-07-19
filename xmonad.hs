@@ -8,10 +8,10 @@ import XMonad.Hooks.SetWMName
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.ManageHelpers(doFullFloat, doCenterFloat, isFullscreen, isDialog, doRectFloat)
+import XMonad.Hooks.ManageHelpers(doFullFloat, doCenterFloat, isFullscreen, isDialog, doRectFloat, doSink)
 import XMonad.Config.Desktop
 import XMonad.Config.Azerty
-import XMonad.Util.Run(spawnPipe)
+import XMonad.Util.Run(spawnPipe, runProcessWithInput)
 import XMonad.Actions.SpawnOn
 import XMonad.Util.EZConfig (additionalKeys, additionalMouseBindings)
 import qualified XMonad.Util.ExtensibleState as ST
@@ -43,7 +43,7 @@ import qualified DBus as D
 import qualified DBus.Client as D
 import qualified XMonad.StackSet as S
 import XMonad.Prelude (isNothing, intercalate)
-import XMonad.Actions.DynamicWorkspaces (appendWorkspace, removeEmptyWorkspaceAfter, removeEmptyWorkspace, addHiddenWorkspace)
+import XMonad.Actions.DynamicWorkspaces (appendWorkspace, removeEmptyWorkspaceAfter, removeEmptyWorkspace, addHiddenWorkspace, addHiddenWorkspaceAt)
 import GHC.Settings (maybeRead)
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
@@ -56,6 +56,7 @@ import qualified XMonad.Util.NamedWindows as NWIN
 import Control.Arrow ((>>>), (&&&), Arrow (first))
 import XMonad.StackSet (RationalRect(RationalRect))
 import XMonad.Util.NamedScratchpad (NamedScratchpad(NS), namedScratchpadManageHook, defaultFloating, namedScratchpadAction, customFloating)
+import XMonad.Config.Dmwit (altMask)
 
 -- preferences
 -- myMenu = "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' -fn 'NotoMonoRegular:bold:pixelsize=14'"
@@ -64,12 +65,28 @@ myBrowser = "brave"
 myTerminal = "kitty"
 myTerminalClass = "kitty"
 myFiles = "thunar"
-myCodeEditor = "code"
+myCodeEditor = "emacs"
 myTextEditor = "gedit"
 myCalendar = "io.elementary.calendar"
 
 myStartupHook = do
     spawn "$HOME/.xmonad/scripts/autostart.sh"
+
+    -- addHiddenWorkspaceAt (\workspace-> (++ [workspace])) "NSP"
+
+    -- term_pid <- runProcessWithInput "pidof" [myTerminal] ""
+
+    -- if not $ null term_pid then return ()
+    -- else do
+    --     spawnOn "NSP" myTerminal
+
+    -- term_pid <- runProcessWithInput "pidof" ["emacs"] ""
+
+    -- if not $ null term_pid then return ()
+    -- else do
+    --     spawnOn "NSP" "emacs"
+
+    -- namedScratchpadAction scratchpads "myTerminal"
     setWMName "LG3D"
 
 -- colours
@@ -102,9 +119,11 @@ myManageHook = composeAll . concat $
     , [title =? t --> doFloat | t <- myTFloats]
     , [resource =? r --> doFloat | r <- myRFloats]
     , [resource =? i --> doIgnore | i <- myIgnores]
+    , [title =? "Bluetooth" --> doCenterFloat]
     , [title =? "Whisker Menu" --> doRectFloat (RationalRect 0 0 1 0.97)]
     , [title =? "xfdashboard" --> doRectFloat (RationalRect 0 0.03 1 0.97)]
     , [className =? "Archlinux-logout.py" --> doFullFloat]
+    , [className =? "deepin-screen-recorder" --> doFullFloat]
     -- , [className =? "Yad" --> doCenterFloat]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61612" | x <- my1Shifts]
     -- , [(className =? x <||> title =? x <||> resource =? x) --> doShiftAndGo "\61899" | x <- my2Shifts]
@@ -176,6 +195,7 @@ scratchpads = [
         doCenterFloat
     , NS "myCalendar" myCalendar (className =? "Io.elementary.calendar")
         doCenterFloat
+    , NS "emacs" "emacs" (className =? "Emacs") doSink
     ]
 
 popup :: String -> X()
@@ -300,10 +320,16 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     , ((modMask, xK_f ), spawn myFiles)
     , ((modMask, xK_x), spawn "archlinux-logout" )
     , ((modMask, xK_i), spawn "$HOME/.xmonad/scripts/display-xprop.fish")
-    , ((modMask, xK_c), spawn myCodeEditor)
+    , ((modMask, xK_c), namedScratchpadAction scratchpads "emacs")
+    , ((modMask, xK_p), spawn "keepassxc")
+    , ((controlMask .|. modMask, xK_g), spawn "pkill -SIGUSR2 emacs")
     , ((modMask, xK_e), spawn myTextEditor)
     , ((modMask, xK_q), kill )
     , ((modMask, xK_Escape), spawn "xkill" )
+
+
+    -- , ((controlMask .|. altMask, xK_e), spawn "emacsclient -c -a \"emacs\"")
+    -- , ((controlMask .|. altMask, xK_e), namedScratchpadAction scratchpads "emacs")
 
     -- , ((modMask, xK_equal), ST.put (ShowEvent True))
 
@@ -347,7 +373,8 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     --SCREENSHOTS
 
-    , ((0, xK_Print), spawn "deepin-screenshot")
+    -- , ((0, xK_Print), spawn "gnome-screenshot --interactive")
+    , ((0, xK_Print), spawn "deepin-screen-recorder --shot")
     -- , ((0, xK_Print), spawn "scrot 'ArcoLinux-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'mv $f $$(xdg-user-dir PICTURES)'")
     -- , ((controlMask, xK_Print), spawn "xfce4-screenshooter" )
     -- , ((controlMask .|. shiftMask , xK_Print ), spawn "gnome-screenshot -i")
@@ -445,7 +472,7 @@ myKeys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
 
     -- APPS
     , ((controlMask .|. altKeyMask, xK_t), namedScratchpadAction scratchpads "MSTeams")
-    , ((controlMask .|. altKeyMask, xK_d), spawn "flatpak run com.discordapp.Discord")
+    -- , ((controlMask .|. altKeyMask, xK_d), spawn "flatpak run com.discordapp.Discord")
     , ((controlMask .|. altKeyMask, xK_v), spawn "xournalpp")
     , ((controlMask .|. altKeyMask, xK_c), namedScratchpadAction scratchpads "myCalendar")
 
